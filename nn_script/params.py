@@ -15,22 +15,24 @@ p_img_w = int(1024 / ratio)
 p_img_c = 3
 
 max_num_box = 100
-batch_size = 16
+batch_size = 2
 
 read_queue = {
     'capacity':100,
-    'dtypes':[tf.string, tf.float32, tf.float32],
+    'dtypes':[tf.string, tf.string],
+    'shapes':[[], []],
     #'shapes':[[], [r_img_h, r_img_w, r_img_c], [max_num_box, 4]],
-    'shapes':[[], [r_img_h, r_img_w, r_img_c], [r_img_h, r_img_w, 1]],
+    #'shapes':[[], [r_img_h, r_img_w, r_img_c], [r_img_h, r_img_w, 1]],
     'min_after_dequeue':20,
     'num_threads': 5
 }
 
 process_queue = {
     'capacity':100,
-    'dtypes':[tf.string, tf.float32, tf.float32],
-    #'shapes':[[], [p_img_h, p_img_w, p_img_c], [max_num_box, 4]],
-    'shapes':[[], [p_img_h, p_img_w, p_img_c], [p_img_h, p_img_w, 1]],
+    'dtypes':[tf.string, tf.string],
+    'shapes':[[], []],
+    #'dtypes':[tf.string, tf.float32, tf.float32],
+    #'shapes':[[], [p_img_h, p_img_w, p_img_c], [p_img_h, p_img_w, 1]],
     'min_after_dequeue':20,
     'num_threads': 5
 }
