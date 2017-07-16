@@ -16,10 +16,10 @@ class DataInput(object):
         self.batch_tensor = queue_loader.batch_data
 
     def get_image(self):
-        return self.batch_tensor[1]
+        return self.batch_tensor[2]
 
     def get_label(self):
-        return self.batch_tensor[2]
+        return self.batch_tensor[3]
 
     def get_batch_tensor(self):
         return self.batch_tensor

@@ -18,27 +18,39 @@ class InputLayer(object):
         self.params = params
 
     def _py_read_data(self):
+        data_dir = "../"
         file_list = self.file_parse.get_next(1)
         image_name, label_name = file_list[0]
-        image_name = image_name.encode("utf-8")
-        label_name = label_name.encode("utf-8")
 
-        return image_name, label_name #, image, label
+        image = cv2.imread(data_dir + image_name)
+        label = cv2.imread(data_dir + label_name)
+
+
+        #back_ground = 1 - label
+        #label = np.concatenate((back_ground, label), 2)
+        label = np.amax(label, 2)
+        
+        image = cv2.resize(image, (self.params.r_img_h, self.params.r_img_w)).astype(np.float32)
+        image /= 255.0
+        label = cv2.resize(label, (self.params.r_label_h, self.params.r_label_w), 
+                                   interpolation = cv2.INTER_NEAREST).astype(np.float32)
+        if len(label.shape) < 3:
+            label = np.expand_dims(label, 2)
+
+
+        # image_name = image_name.encode("utf-8")
+        # label_name = label_name.encode("utf-8")
+
+        return image_name, label_name, image, label
 
     def read_data(self, dtypes):
         return tf.py_func(self._py_read_data, [], dtypes)
 
     def process_data(self, read_tensor, dtypes):
+        pq_params = self.params.process_queue
         image_name = read_tensor[0]
         label_name = read_tensor[1]
+        image = read_tensor[2]
+        label = read_tensor[3]
 
-        # image = read_tensor[1]
-        # label = read_tensor[2]
-        # image = tf.image.per_image_standardization(image)
-        # if self.is_train:
-        #     image = tf.image.random_brightness(image, 0.5)
-        # rcrop_size = [self.params.p_img_h, self.params.p_img_w]
-        # image, label = self._random_crop(rcrop_size, image, label)
-
-        # return [image_name, image, label]
-        return image_name, label_name
+        return image_name, label_name, image, label

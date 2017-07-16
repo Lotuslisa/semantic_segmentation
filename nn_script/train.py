@@ -8,5 +8,5 @@ import net_flow
 
 
 if __name__ == "__main__":
-    net = net_flow.NetFlow(params, True, True)
+    net = net_flow.NetFlow(params, True, False)
     net.mainloop()

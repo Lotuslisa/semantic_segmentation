@@ -4,14 +4,15 @@ import cv2
 import numpy as np
 import tensorflow as tf
 
-from TensorflowToolbox.utility import file_io
 from TensorflowToolbox.model_flow import save_func as sf
+from TensorflowToolbox.model_flow import model_trainer as mt 
+from TensorflowToolbox.utility import file_io
 from TensorflowToolbox.utility import utility_func as uf 
 from TensorflowToolbox.utility import image_utility_func as iuf 
 from TensorflowToolbox.utility import result_obj as ro
 
 from data_input import DataInput
-from data_input_ph import DataInputPh
+
 
 class NetFlow(object):
     def __init__(self, params, load_train, load_test):
@@ -20,7 +21,6 @@ class NetFlow(object):
         self.params = params
         self.train_data_input = None
         self.test_data_input = None
-        self.data_ph = DataInputPh(params)
         self.threads = list()
 
         config_proto = uf.define_graph_config(self.params.gpu_fraction)
@@ -34,20 +34,12 @@ class NetFlow(object):
        
 
         model = file_io.import_module_class(params.model_def_name, "Model")
-        #if self.train_data_input is not None: 
-        #    self.data_ph = self.tensor_to_palceholder(self.train_data_input)
-        #elif self.test_data_input is not None: 
-        #    self.data_ph = self.tensor_to_palceholder(self.test_data_input)
-
-        #self.model = model(self.data_ph, params)
-        self.model = model(self.data_ph, params)
+        self.model = model(params)
+        self.train_op, self.loss, self.test_loss = mt.model_trainer(
+                                         self.model, params.num_gpus,
+                                         self.train_data_input,
+                                         self.test_data_input)
     
-    def tensor_to_placeholder(self, tensors):
-        for tensor in tensors:
-            ph = tf.placeholder(tensor.dtype, tensor.get_shape().as_list())
-
-        return ph
-
     def init_var(self, sess):
         sf.add_train_var()
         sf.add_loss()
@@ -70,27 +62,6 @@ class NetFlow(object):
                             self.params.restore_model_name)
 
 
-    def demap_to_color(self, demap):
-        demap = demap * 10
-        demap[demap > 1] = 1
-        demap = iuf.norm_image(demap)
-        #demap = demap.astype(np.uint8)
-        im_color = cv2.applyColorMap(demap, cv2.COLORMAP_JET)
-        return im_color
-
-
-    def save_demap(self, file_names, density_maps, images):
-        result_dir = "/home/guanhang/results/"
-        for i in range(file_names.shape[0]):
-            basename = os.path.basename(file_names[i])
-            image = images[i]
-            #image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-            result_name = result_dir + basename.replace('.png','.demap')
-            demap_color = self.demap_to_color(density_maps[i])
-            concate_img = np.hstack((image, demap_color))
-            cv2.imshow('concat', concate_img)
-            cv2.waitKey(0)
-
     def mainloop(self):
         sess = self.sess
         self.init_var(sess)
@@ -100,26 +71,18 @@ class NetFlow(object):
 
         if self.load_train:
             for i in range(params.max_training_iter):
-                feed_dict = self.data_ph.get_feed_dict(
-                                            sess,
-                                            self.train_data_input.get_batch_tensor())
+                _, train_loss_v = sess.run([self.train_op, self.loss])
+                print(train_loss_v)
 
-                _, train_loss_v = sess.run([model.train_op, model.loss], feed_dict=feed_dict)
+                # if i % params.test_per_iter == 0:
+                #     summ_v, test_loss_v = sess.run([self.summ, self.test_loss])
 
-                if i % params.test_per_iter == 0:
-                    feed_dict = self.data_ph.get_feed_dict(
-                                            sess,
-                                            self.test_data_input.get_batch_tensor())
-
-                    summ_v, test_loss_v = sess.run([self.summ, model.loss], 
-                                                    feed_dict=feed_dict)
-
-                    self.sum_writer.add_summary(summ_v, i)
-                    print('i: {}, train_loss: {}, test_loss: {}'.format(
-                                                i, train_loss_v, test_loss_v))
-                if i != 0 and (i % params.save_per_iter == 0 or \
-                               i == params.max_training_iter - 1):
-                    sf.save_model(sess, self.saver, params.model_dir,i)
+                #     self.sum_writer.add_summary(summ_v, i)
+                #     print('i: {}, train_loss: {}, test_loss: {}'.format(
+                #                                 i, train_loss_v, test_loss_v))
+                # if i != 0 and (i % params.save_per_iter == 0 or \
+                #                i == params.max_training_iter - 1):
+                #     sf.save_model(sess, self.saver, params.model_dir,i)
 
 #                    feed_dict = self.get_feed_dict(sess, is_train=False)
 #                    loss_v, summ_v, count_diff_v = \
@@ -159,10 +122,7 @@ class NetFlow(object):
 
             for i in range(test_iter):
                 batch_tensor_v = sess.run(self.test_data_input.get_batch_tensor())
-                feed_dict = self.data_ph.get_feed_dict(sess, batch_tensor_v)
-
-                density_map, test_loss_v = sess.run([model.output, model.loss], 
-                                                    feed_dict=feed_dict)
+                density_map, test_loss_v = sess.run([model.output, model.loss])
 
                 density_map /= params.density_scale
                 batch_file_name = batch_tensor_v[0]
