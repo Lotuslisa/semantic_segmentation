@@ -21,7 +21,7 @@ class Model(object):
         
         image = input_data.get_image()
 
-        logits = deepcut_new.build_graph(image, True)
+        logits = deepcut_new.build_graph(image, is_train)
 
         output = dict()
         output['logits'] = logits

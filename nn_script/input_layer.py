@@ -47,7 +47,7 @@ class InputLayer(object):
         return tf.py_func(self._py_read_data, [], dtypes)
 
     def process_data(self, read_tensor, dtypes):
-        pq_params = self.params.process_queue
+        pq_params = self.params.preprocess_queue
         image_name = read_tensor[0]
         label_name = read_tensor[1]
         image = read_tensor[2]
