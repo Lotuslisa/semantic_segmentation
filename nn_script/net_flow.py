@@ -72,7 +72,7 @@ class NetFlow(object):
         if self.load_train:
             for i in range(params.max_training_iter):
                 _, train_loss_v = sess.run([self.train_op, self.loss])
-                print(train_loss_v)
+                print("i: %d, loss: %.2f"%(i, train_loss_v))
 
                 # if i % params.test_per_iter == 0:
                 #     summ_v, test_loss_v = sess.run([self.summ, self.test_loss])
@@ -80,9 +80,11 @@ class NetFlow(object):
                 #     self.sum_writer.add_summary(summ_v, i)
                 #     print('i: {}, train_loss: {}, test_loss: {}'.format(
                 #                                 i, train_loss_v, test_loss_v))
-                # if i != 0 and (i % params.save_per_iter == 0 or \
-                #                i == params.max_training_iter - 1):
-                #     sf.save_model(sess, self.saver, params.model_dir,i)
+                
+                
+                if i != 0 and (i % params.save_per_iter == 0 or \
+                               i == params.max_training_iter - 1):
+                    sf.save_model(sess, self.saver, params.model_dir,i)
 
 #                    feed_dict = self.get_feed_dict(sess, is_train=False)
 #                    loss_v, summ_v, count_diff_v = \
@@ -121,13 +123,18 @@ class NetFlow(object):
             test_iter = int(file_len / batch_size) + 1
 
             for i in range(test_iter):
-                batch_tensor_v = sess.run(self.test_data_input.get_batch_tensor())
-                density_map, test_loss_v = sess.run([model.output, model.loss])
+                results_v = sess.run(self.test_data_input.get_batch_tensor() 
+                                     + [tf.sigmoid(model.output['logits'])])
 
-                density_map /= params.density_scale
-                batch_file_name = batch_tensor_v[0]
-                self.save_demap(batch_file_name, density_map, batch_tensor_v[1])
+                batch_file_name = results_v[0]
+                #import pdb
+                #pdb.set_trace()
+                segmask_v = results_v[-1] * 255
 
-
+                #self.save_demap(batch_file_name, seg_mask, batch_tensor_v[1])
+                for j in range(batch_size):
+                    test_name = batch_file_name[j].replace('.jpg','_segmap.jpg')
+                    cv2.imwrite(test_name,segmask_v[j])
+                    
         coord.request_stop()
         coord.join(self.threads)

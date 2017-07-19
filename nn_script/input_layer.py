@@ -20,9 +20,22 @@ class InputLayer(object):
         self.data_arg = data_arg.DataArg()
 
     def _py_read_data(self):
-        data_dir = "../"
-        file_list = self.file_parse.get_next(1)
-        image_name, label_name = file_list[0]
+        if self.is_train:
+             data_dir = "../segmentation_dataset/"
+        else:
+             data_dir = ''
+   
+        #file_list = self.file_parse.get_next(1)
+        #image_name, label_name = file_list[0]
+        while(1):
+            file_list = self.file_parse.get_next(1)
+            image_name, label_name = file_list[0]
+            if image_name == "/MSRA10K/Imgs/142426.jpg" or label_name == "/MSRA10K/GTs/102052.png":
+                continue
+
+            if os.path.exists(data_dir+image_name) and os.path.exists(data_dir+label_name):
+                break
+
 
         image = cv2.imread(data_dir + image_name)
         label = cv2.imread(data_dir + label_name)
@@ -35,9 +48,17 @@ class InputLayer(object):
         image /= 255.0
         label = cv2.resize(label, (self.params.r_label_h, self.params.r_label_w), 
                                    interpolation = cv2.INTER_NEAREST).astype(np.float32)
+
+        if len(image.shape) < 3:
+            image = np.expand_dims(image,2)
+            image = np.tile(image, (1,1,3))
+        
         if len(label.shape) < 3:
             label = np.expand_dims(label, 2)
 
+       # print(label.shape) 
+       # label[label > 1] = 1.0  # comment by shz
+       # label[label < 1] = 0.0
 
         # image_name = image_name.encode("utf-8")
         # label_name = label_name.encode("utf-8")
@@ -47,6 +68,36 @@ class InputLayer(object):
     def read_data(self, dtypes):
         return tf.py_func(self._py_read_data, [], dtypes)
 
+
+#     def ImageCrop(self, im_path, gt_path, im_reshape, transformer):
+#         return tf.py_func(self.processImageCrop, [im_path, gt_path, im_reshape,transformer], [float32, float32])
+# 
+# 
+#     
+# def processImageCrop(im_path, gt_path, im_reshape, transformer):
+# 
+#   img_src = caffe.io.load_image(im_path)
+#   img_src = perturb(img_src)
+#   pathparts = im_path.split('/')
+#   gt = caffe.io.load_image(gt_path)
+#   gt = gt[:,:,0]
+#   gt[gt>0] = 1
+#   
+#   crop = getRandCrop(img_src.shape[1], img_src.shape[0], 0.9, 1.0)  
+#   image_mean = [123.68/255, 116.779/255, 103.939/255]
+#   data1 = img_src[crop[1]:crop[3],crop[0]:crop[2],:]
+#   data2 = gt[crop[1]:crop[3],crop[0]:crop[2]]
+#   if random.random() > 0.5:
+#     data1 = data1[:, ::-1,]
+#     data2 =data2[:, ::-1,]
+#   if random.random() > 0.7: # conver to grey
+#     data1 = rgb2gray(data1)
+# 
+#   data1 = transformer.preprocess('data_in',data1) 
+#   data2 = resize_gt(data2, (im_reshape[0]*gt_scale,im_reshape[1]*gt_scale))
+# 
+#   return data1, data2
+       
     def process_data(self, read_tensor, dtypes):
         pq_params = self.params.preprocess_queue
         image_name = read_tensor[0]

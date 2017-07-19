@@ -25,6 +25,7 @@ class Model(object):
 
         output = dict()
         output['logits'] = logits
+        self.output = output
         return output 
 
     def model_loss(self, input_data, output):
@@ -33,8 +34,9 @@ class Model(object):
         loss = tf.nn.sigmoid_cross_entropy_with_logits(
                                     labels = label,
                                     logits = logits)
-        # l2_loss = mf.image_l2_loss(densmap, label, "image_l2_loss")
-        # self.loss = l2_loss
+        
+        # l2_loss = mf.image_l2_loss(logits, label, "image_l2_loss")
+        ### self.loss = l2_loss
         return loss
 
     def model_optimizer(self):
