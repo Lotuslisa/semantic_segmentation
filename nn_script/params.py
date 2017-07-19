@@ -4,12 +4,12 @@ import json
 import tensorflow as tf
 
 
-r_img_h = 224 
-r_img_w = 224
+r_img_h = 256 
+r_img_w = 256
 r_img_c = 3
 
-r_label_h = 224
-r_label_w = 224
+r_label_h = 256
+r_label_w = 256
 r_label_c = 1
 
 p_img_h = 224
@@ -57,6 +57,22 @@ restore_model_name = None
 
 num_gpus = 0
 
-#file_name = 'config.json'
-#with open(file_name, 'w') as f:
-#    json.dump(params, f, indent=2, separators=(',', ':'))
+
+image_arg_dict = dict()
+image_arg_dict["rbright_max"] = 0.2
+image_arg_dict["rcontrast_lower"] = 0.5
+image_arg_dict["rcontrast_upper"] = 1.5
+image_arg_dict["rhue_max"] = 0.2
+image_arg_dict["rcrop_size"] = [p_img_h, p_img_w]
+image_arg_dict["rflip_updown"] = True
+image_arg_dict["rflipp_leftright"] = True
+
+label_arg_dict = dict()
+label_arg_dict["rcrop_size"] = [p_label_h, p_label_w]
+label_arg_dict["rflip_updown"] = True
+label_arg_dict["rflipp_leftright"] = True
+
+arg_dict = list()
+arg_dict.append(image_arg_dict)
+arg_dict.append(label_arg_dict)
+
