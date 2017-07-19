@@ -31,6 +31,7 @@ class InputLayer(object):
         label = np.amax(label, 2)
         
         image = cv2.resize(image, (self.params.r_img_h, self.params.r_img_w)).astype(np.float32)
+
         image /= 255.0
         label = cv2.resize(label, (self.params.r_label_h, self.params.r_label_w), 
                                    interpolation = cv2.INTER_NEAREST).astype(np.float32)
