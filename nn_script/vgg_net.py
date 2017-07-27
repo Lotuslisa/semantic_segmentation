@@ -35,7 +35,7 @@ class Model(object):
                                     labels = label,
                                     logits = logits)
         
-        # l2_loss = mf.image_l2_loss(logits, label, "image_l2_loss")
+        l2_loss = mf.image_l2_loss(logits, label, "image_l2_loss")
         ### self.loss = l2_loss
         return loss
 

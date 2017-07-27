@@ -13,7 +13,7 @@ class InputLayer(object):
     def __init__(self, file_name, params, is_train):
         self.file_name = file_name
         self.file_parse = file_loader.TextFileLoader()
-        self.file_parse.read_file(file_name)
+        self.file_parse.read_file(file_name, params.shuffle)
         self.file_len = self.file_parse.get_file_len()
         self.is_train = is_train
         self.params = params
@@ -108,8 +108,20 @@ class InputLayer(object):
         if not self.is_train:
             for d in arg_dict:
                 if "rcrop_size" in d:
-                    rcrop_size = d.pop(rcrop_size)
-                    d['ccrp_size'] = rcrop_size
+                    rcrop_size = d.pop('rcrop_size')
+                    d['ccrop_size'] = rcrop_size
+                if "rbright_max" in d:
+                    rbright_max = d.pop('rbright_max')
+                if "rcontrast_lower" in d:
+                    rcontrast_lower = d.pop('rcontrast_lower')
+                if "rcontrast_upper" in d:
+                    rcontrast_upper = d.pop('rcontrast_upper')
+                if "rhue_max" in d:
+                    rhue_max = d.pop('rhue_max')
+                if "rflip_updown" in d:
+                    rflip_updown = d.pop('rflip_updown')
+                if "rflipp_leftright" in d:
+                    rflipp_leftright = d.pop('rflipp_leftright')
 
         data_list = read_tensor[2:]
         data_list = self.data_arg(data_list, arg_dict)
